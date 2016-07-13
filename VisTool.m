@@ -56,31 +56,21 @@ function VisTool_OpeningFcn(hObject, ~, handles, varargin)
 handles.output = hObject;
 
 % Neno part, from here, we import the data
+cd Structures
+fileList = dir('*.mat');
+for i=1:numel(fileList)
+    load(fileList(i).name);    
+    fileName =  fileList(i).name(1:end-4);
+    eval(['handles.data.' fileName ' = ' fileName ';']);
+end
+cd ..
 
-% RUEBS
-load('RUEB34424.mat');
-handles.data.RUEB34424 = RUEB34424;
-load('RUEB53425.mat');
-handles.data.RUEB53425 = RUEB53425;
-load('RUEB67407.mat');
-handles.data.RUEB67407 = RUEB67407;
-load('RUEB67426.mat');
-handles.data.RUEB67426 = RUEB67426;
-load('RUEB6224.mat');
-handles.data.RUEB6224 = RUEB6224;
-
-% HE and PW
-load('HE12401.mat');
-handles.data.HE12401 = HE12401;
-load('PW12431.mat');
-handles.data.PW12431 = PW12431;
-load('PW46435.mat');
-handles.data.PW46435 = PW46435;
-
-load('rainData.mat')
+% Added comments
+% Added more commentes
+load('Data\rainData.mat')
 handles.rainData = rainData;
 
-load('catchmentInfo.mat');
+load('Data\catchmentInfo.mat');
 handles.catchmentInfo = catchmentInfo;
 
 

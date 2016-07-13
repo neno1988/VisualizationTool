@@ -66,5 +66,3 @@ if(~isfield(targetRUEB, handles.ruebList))
 end
 
 end
-
-

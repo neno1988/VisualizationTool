@@ -10,7 +10,9 @@ tmpRueb = fields(handles.data);
 N = numel(fields(handles.data));
 %% Get data from catchment info?
 if(strcmp(from, 'catchmentInfo'))
-    dataRUEB = zeros(max(size(handles.catchmentInfo.(tmpRueb{1}).(dataName))), N);
+%     dataRUEB =
+%     zeros(max(size(handles.catchmentInfo.(tmpRueb{1}).(dataName))), N); %
+%     Should initialize, but it is not clear how
     for i=1:N
         if(isfield(handles.catchmentInfo.(tmpRueb{i}), dataName))
         nInterPoints = numel(handles.catchmentInfo.(tmpRueb{i}).(dataName));
