@@ -67,11 +67,11 @@ switch(variable)
         end
         
         
-            case 'absErrCentralTank'
-                % Get Data
-                [waterLevels, newTime] = GetDataRueb(handles, 'waterLevel');
-                [gepOverflowEdge, ~] = GetDataRueb(handles, 'gepOverflowEdge', 'catchmentInfo');
-                [overflowEdge, ~] = GetDataRueb(handles, 'overflowEdge', 'catchmentInfo');
+    case 'absErrCentralTank'
+        % Get Data
+        [waterLevels, newTime] = GetDataRueb(handles, 'waterLevel');
+        [gepOverflowEdge, ~] = GetDataRueb(handles, 'gepOverflowEdge', 'catchmentInfo');
+        [overflowEdge, ~] = GetDataRueb(handles, 'overflowEdge', 'catchmentInfo');
         [volume, ~] = GetDataRueb(handles, 'volume', 'catchmentInfo');
         [H2VHeight, ~] = GetDataRueb(handles, 'H2VHeight', 'catchmentInfo');
         [H2VVolume, ~] = GetDataRueb(handles, 'H2VVolume', 'catchmentInfo');
@@ -123,12 +123,18 @@ if(isfield(handles, 'rainData'))
     rainDataColorMap = rainDataToPlot/5; % 5 mm/h is the max. reperesentable
     
     % Update Data in dataRUEB matrix
-    rainSize = 10;
-    dataRUEB = [repmat(rainDataColorMap, [1,rainSize]), dataRUEB];
+
     
     % update ticks and labels
     ruebList =  [ 'RAIN', ruebList];
-    yTicks = [floor(rainSize/2); yTicks+rainSize];
+    if(strcmp(typ,'heatmap'))
+        rainSize = 10;
+        dataRUEB = [repmat(rainDataColorMap, [1,rainSize]), dataRUEB];
+        yTicks = [floor(rainSize/2); yTicks+rainSize];
+    elseif(strcmp(typ,'horizonPlot'))
+        dataRUEB = [dataRUEB, rainDataColorMap];
+    end
+    
 end
 
 % If available, plot WWTP capacity utilization
@@ -139,14 +145,16 @@ if(isfield(handles, 'inflowWWTP'))
     
     maxCapacity  = handles.catchmentInfo.WWTP.maxInflow;
     inflowWWTPColormap = inflowWWTPToPlot/maxCapacity;
-    
-    % Update Data in dataRUEB matrix
-    WWTPCapacitySize = 10;
-    dataRUEB = [dataRUEB, repmat(inflowWWTPColormap, [1,WWTPCapacitySize])];
-    
     % update ticks and labels
     ruebList =  [ruebList, 'WWTP Capacity'];
-    yTicks = [ yTicks; size(dataRUEB, 2)-floor(WWTPCapacitySize/2)];
+    if(strcmp(typ,'heatmap'))
+            WWTPCapacitySize = 10;
+            dataRUEB = [dataRUEB, repmat(inflowWWTPColormap, [1,WWTPCapacitySize])];
+            yTicks = [ yTicks; size(dataRUEB, 2)-floor(WWTPCapacitySize/2)];
+    elseif(strcmp(typ,'horizonPlot'))
+        dataRUEB = [dataRUEB, inflowWWTPColormap];
+    end
+    
 end
 
 
