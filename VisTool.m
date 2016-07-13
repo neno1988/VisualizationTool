@@ -73,6 +73,8 @@ handles.rainData = rainData;
 load('Data\catchmentInfo.mat');
 handles.catchmentInfo = catchmentInfo;
 
+load('Data\inflowWWTP.mat');
+handles.inflowWWTP = inflowWWTP;
 
 for i=1:numel(fields(handles.data))
     tmpRueb = fields(handles.data);

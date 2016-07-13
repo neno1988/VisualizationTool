@@ -115,6 +115,44 @@ switch(variable)
         return;
 end
 
+
+% If available, plot rain
+if(isfield(handles, 'rainData'))
+    rainData = handles.rainData;
+    rainDataToPlot = interp1(rainData.timeSec, rainData.rain, newTime);
+    rainDataColorMap = rainDataToPlot/5; % 5 mm/h is the max. reperesentable
+    
+    % Update Data in dataRUEB matrix
+    rainSize = 10;
+    dataRUEB = [repmat(rainDataColorMap, [1,rainSize]), dataRUEB];
+    
+    % update ticks and labels
+    ruebList =  [ 'RAIN', ruebList];
+    yTicks = [floor(rainSize/2); yTicks+rainSize];
+end
+
+% If available, plot WWTP capacity utilization
+if(isfield(handles, 'inflowWWTP'))
+    
+    inflowWWTP = handles.inflowWWTP;
+    inflowWWTPToPlot = interp1(inflowWWTP.timeSec, inflowWWTP.data, newTime);
+    
+    maxCapacity  = handles.catchmentInfo.WWTP.maxInflow;
+    inflowWWTPColormap = inflowWWTPToPlot/maxCapacity;
+    
+    % Update Data in dataRUEB matrix
+    WWTPCapacitySize = 10;
+    dataRUEB = [dataRUEB, repmat(inflowWWTPColormap, [1,WWTPCapacitySize])];
+    
+    % update ticks and labels
+    ruebList =  [ruebList, 'WWTP Capacity'];
+    yTicks = [ yTicks; size(dataRUEB, 2)-floor(WWTPCapacitySize/2)];
+end
+
+
+
+
+
 % actual Plotting
 if(strcmp(typ,'horizonPlot'))
     options.axesPlot = 1;
@@ -143,14 +181,3 @@ else
     error('Unknown plot type.');
 end
 
-% If available, plot rain
-if(isfield(handles, 'rainData'))
-    rainData = handles.rainData;
-    rainDataToPlot = interp1(rainData.timeSec, rainData.rain, newTime);
-axes(handles.axes4);
-bar(newTime, rainDataToPlot);
-axis([min(newTime) max(newTime) 0 1.2*max(rainDataToPlot)])
-set(gca, 'YTick', []);
-set(gca, 'XTick', []);
-axes(handles.axes1);
-end

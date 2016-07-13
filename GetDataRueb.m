@@ -23,6 +23,7 @@ if(strcmp(from, 'catchmentInfo'))
     end
     newtime = nan;
     return;
+    
 end
 
 
