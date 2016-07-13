@@ -52,14 +52,15 @@ switch(variable)
 
         % Scale WRT dimension
         if(strcmp(typ,'heatmap'))
-            yResolution = 50; % might be slightly changed, won't check for it.
+            yResolution = 50; % Plus separation lines!
             totalStorageVolume = sum(volume);
             dataRUEBNew = [];
             yTicks = zeros(N,1);
+            nanCol = nan*ones(size(dataRUEB(:,1)));
             for i=1:N
                 reps = round(volume(i)/totalStorageVolume*yResolution);
-                yTicks(i) = round(size(dataRUEBNew, 2)+ reps/2);
-                dataRUEBNew = [dataRUEBNew, repmat(dataRUEB(:,i), [1,reps])];
+                yTicks(i) = round(size(dataRUEBNew, 2)+ reps/2+1);
+                dataRUEBNew = [dataRUEBNew, repmat(dataRUEB(:,i), [1,reps]), nanCol];
             end
             dataRUEB = dataRUEBNew;
             set(gca, 'YTick', yTicks);
@@ -129,7 +130,7 @@ if(isfield(handles, 'rainData'))
     ruebList =  [ 'RAIN', ruebList];
     if(strcmp(typ,'heatmap'))
         rainSize = 10;
-        dataRUEB = [repmat(rainDataColorMap, [1,rainSize]), dataRUEB];
+        dataRUEB = [repmat(rainDataColorMap, [1,rainSize]),nanCol, dataRUEB];
         yTicks = [floor(rainSize/2); yTicks+rainSize];
     elseif(strcmp(typ,'horizonPlot'))
         dataRUEB = [dataRUEB, rainDataColorMap];
