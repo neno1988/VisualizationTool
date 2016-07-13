@@ -16,3 +16,16 @@
 %            .COD
 %            ...
 %                  
+
+% Additional RUEB information which is not time-based, can be stored in a
+% file named CatchmentInformation.mat (matlab struct)
+% the variables used from this file are:
+% overflowEdge
+% H2V (height to volume)
+% volume
+% WWTP: maxCapacity
+% if available, the tool uses
+% measuredOverflowEdge
+% gepOverflowEdge
+%
+% this list is increasing...
