@@ -1,7 +1,7 @@
 function PlotHorizonPlot(handles, typ)
 % Process data
-V = handles.listbox1.Value;
-variable = strtrim(handles.listbox1.String(V,:));
+
+variable = GetString(handles.listbox1);
 if(iscell(variable))
     variable = variable{1};
 end
@@ -111,6 +111,111 @@ switch(variable)
         overallFillingLevelPercent = sum(fillingLevel,2)/Vtot;
         dataRUEB = bsxfun(@minus, fillingLevelPercent,overallFillingLevelPercent);
         
+    case 'compareToDownstream'    
+                % Get Data
+        [waterLevels, newTime] = GetDataRueb(handles, 'waterLevel');
+        [gepOverflowEdge, ~] = GetDataRueb(handles, 'gepOverflowEdge', 'catchmentInfo');
+        [overflowEdge, ~] = GetDataRueb(handles, 'overflowEdge', 'catchmentInfo');
+        [volume, ~] = GetDataRueb(handles, 'volume', 'catchmentInfo');
+        [H2VHeight, ~] = GetDataRueb(handles, 'H2VHeight', 'catchmentInfo');
+        [H2VVolume, ~] = GetDataRueb(handles, 'H2VVolume', 'catchmentInfo');
+        [downstreamTanks, ~] = GetDataRueb(handles, 'downstreamTank', 'catchmentInfo');
+        
+        % rescale water levels
+        waterLevels = bsxfun(@rdivide,waterLevels,overflowEdge);
+        waterLevels = bsxfun(@times,waterLevels,gepOverflowEdge);
+        
+        % Find index of downstram Tank
+        ruebList = handles.ruebList;
+        N = numel(ruebList);
+        downstreamIndex = zeros(1,N);
+        %
+        for i=1:N % for all tanks
+            tankNow = handles.ruebList{i};
+            tankDownstream = handles.catchmentInfo.(tankNow).downstreamTank;
+            for k=1:10 % 10 = Max-depth search
+                for j=1:N
+                    tankDownstream(double(tankDownstream)==0)=[]; % clean spaces (strtrim cannot remove these...)
+                    if(sum(strcmp(tankDownstream, handles.ruebList))>=1)
+                        downstreamIndex(i) = find(strcmp(tankDownstream, handles.ruebList));
+                        break
+                    end
+                end
+                if(downstreamIndex(i)==0)
+                    % follow downstream structures until the end
+                    if(strcmp(strtrim(tankDownstream), 'WWTP'))
+                        % Zero for WWTP looks like a good standard...
+                        break;
+                    else
+                        tankDownstream = handles.catchmentInfo.(tankDownstream).downstreamTank;
+                    end
+                else
+                    break
+                end
+            end
+        end
+        
+        
+        % WWTP:
+        inflowWWTP = handles.inflowWWTP;
+        inflowWWTPToPlot = interp1(inflowWWTP.timeSec, inflowWWTP.data, newTime);
+        maxCapacity  = handles.catchmentInfo.WWTP.maxInflow;
+        inflowWWTPUsage = inflowWWTPToPlot/maxCapacity;
+        
+        % Remove tanks without H2V functions:
+        toRemove= find(isnan(sum(H2VVolume)));
+        waterLevels(:, toRemove) = [];
+        volume(:, toRemove) = [];
+        H2VHeight(:, toRemove) = [];
+        H2VVolume(:, toRemove) = [];
+
+        disp('removing' );
+        disp(ruebList(toRemove));
+        disp('Missing Height to volume information');
+        % Update downstream tank information
+        tmpList = [ruebList {'WWTP'}];
+        downstreamIndex(downstreamIndex==0) = size(tmpList,2);
+        downtreamTanksList = tmpList(downstreamIndex);
+        ruebList(toRemove) = [];
+        downtreamTanksList(toRemove) = [];
+        
+        % compute criteria
+        N = numel(ruebList);
+        fillingLevelCompared = zeros(numel(newTime), N);
+        Vtot = 0;
+        for i = 1:N
+        
+            
+            if(strcmp(downtreamTanksList{i}, 'WWTP'))
+                fillingLevelThis = ComputeFillingLevelPercent(H2VHeight, H2VVolume,waterLevels, i);
+                fillingLevelCompared(:,i) = min(max(0,inflowWWTPUsage-fillingLevelThis), 1);
+            else
+                
+            downstreamIdx = find(strcmp(downtreamTanksList{i}, ruebList));
+            fillingLevelThis  = ComputeFillingLevelPercent(H2VHeight, H2VVolume,waterLevels, i);
+            fillingLevelBelow = ComputeFillingLevelPercent(H2VHeight, H2VVolume,waterLevels,downstreamIdx);
+            fillingLevelCompared(:,i) = min(max(0,fillingLevelThis ./ fillingLevelBelow),1);
+            end
+        end
+
+        dataRUEB = fillingLevelCompared;
+        
+                % Scale WRT dimension
+        if(strcmp(typ,'heatmap'))
+            yResolution = 50; % Plus separation lines!
+            totalStorageVolume = sum(volume);
+            dataRUEBNew = [];
+            yTicks = zeros(N,1);
+            nanCol = nan*ones(size(dataRUEB(:,1)));
+            for i=1:N
+                reps = round(volume(i)/totalStorageVolume*yResolution);
+                yTicks(i) = round(size(dataRUEBNew, 2)+ reps/2+1);
+                dataRUEBNew = [dataRUEBNew, repmat(dataRUEB(:,i), [1,reps]), nanCol];
+            end
+            dataRUEB = dataRUEBNew;
+            set(gca, 'YTick', yTicks);
+            
+        end
     otherwise
         disp('unknown plot')
         return;
@@ -179,7 +284,9 @@ if(strcmp(typ,'horizonPlot'))
 elseif(strcmp(typ,'heatmap'))
     colormap jet
     h = imagesc(dataRUEB');
-    set(h,'alphadata',~isnan(dataRUEB'))
+    if(strcmp(version(),'8.3.0.532 (R2014a)')) % Bug/ function not available, matlab crash
+        set(h,'alphadata',~isnan(dataRUEB'))
+    end
     set(gca, 'YTick', yTicks);
     set(gca, 'YTickLabel', ruebList);
     caxis([0 1])
@@ -189,4 +296,15 @@ elseif(strcmp(typ,'heatmap'))
 else
     error('Unknown plot type.');
 end
+end
 
+function fillingLevel = ComputeFillingLevelPercent(H2VHeight, H2VVolume,waterLevels, i)
+tmpHeight = sort(H2VHeight(:,i));
+tmpVolume = sort(H2VVolume(:,i));
+tmpVolume(diff(tmpHeight)<=0) = [];
+tmpHeight(diff(tmpHeight)<=0) = [];
+fillingLevel = interp1(tmpHeight, tmpVolume, waterLevels(:,i));
+
+% take into account tank size
+fillingLevel = fillingLevel/tmpVolume(end);
+end

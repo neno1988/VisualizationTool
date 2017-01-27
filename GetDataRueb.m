@@ -28,8 +28,8 @@ end
 
 
 %% Get and reshape data from all RUEB
-startTime = handles.startDateEdit.String; %'01.05.2014';
-stopTime  = handles.stopDateEdit.String; % '10.05.2014';
+startTime = GetString(handles.startDateEdit); %'01.05.2014';
+stopTime  = GetString(handles.stopDateEdit); % '10.05.2014';
 dt = 600; % 10 Minutes
 startTimeSec = datenum(startTime,'dd.mm.yyyy')*24*60*60;
 stopTimeSec  = datenum(stopTime,'dd.mm.yyyy')*24*60*60;

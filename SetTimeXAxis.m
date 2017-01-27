@@ -1,10 +1,12 @@
 function [] = SetTimeXAxis(handles)
-    timeStartSec = datenum(handles.startDateEdit.String, 'dd.mm.yyyy')*24*60*60;
-    timeStopSec  = datenum(handles.stopDateEdit.String, 'dd.mm.yyyy')*24*60*60;
+    timeStartSec = datenum(GetString(handles.startDateEdit), 'dd.mm.yyyy')*24*60*60;
+    timeStopSec  = datenum(GetString(handles.stopDateEdit), 'dd.mm.yyyy')*24*60*60;
     dt = 600;
     timeSec = timeStartSec:dt:timeStopSec;
     timeSec = timeSec - timeSec(1);
-    timeScale = strtrim(handles.listbox4.String(handles.listbox4.Value, :));
+    timeScale = GetString(handles.listbox4);
+
+    
     switch(timeScale)
         case 'seconds'
             t = timeSec;
@@ -14,6 +16,8 @@ function [] = SetTimeXAxis(handles)
             t = timeSec/(60*60);
         case 'days'
             t = timeSec/(60*60*24);
+        case 'weeks'
+            t = timeSec/(60*60*24*7);
         case 'months'
             disp('Displaying every 30 day, not months')
             t = timeSec/(60*60*24*30);
@@ -25,9 +29,9 @@ function [] = SetTimeXAxis(handles)
     xlabel(['Time [' timeScale ']'])
     numberOfTicks = floor(t(end));
     L = get(gca,'XLim');
-    if(numberOfTicks>50)
-        warning('Limiting X-axis labels to 50')
-        numberOfTicks = 50;
+    if(numberOfTicks>60)
+        warning('Limiting X-axis labels to 60')
+        numberOfTicks = 60;
         dt = max(t)/numberOfTicks;
         set(gca, 'XTick', linspace(L(1),L(2),numberOfTicks+1));
         set(gca, 'XTickLabel', round([0:numberOfTicks]*dt)); %#ok<NBRAK>

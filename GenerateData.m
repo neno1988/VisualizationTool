@@ -8,12 +8,16 @@ timeSec = 1:10;
 waterLevel = 1:10;
 flow = 1:10;
 inflow = 1:10;
+rain = 1:10;
+CSB = 1:10;
 
 %% Structure generation
 CreateStructure('RUEB12421', timeSec);
 AddMeasurement('RUEB12421', 'waterLevel', waterLevel);
 AddMeasurement('RUEB12421', 'outflow', flow);
 AddMeasurement('RUEB12421', 'inflow', inflow);
+AddMeasurement('RUEB12421', 'rain', rain);
+AddMeasurement('RUEB12421', 'CSB', CSB);
 
 end
 
